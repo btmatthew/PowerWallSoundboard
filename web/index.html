@@ -11,6 +11,20 @@ and open the template in the editor.
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        <div>TODO write content</div>
+        <div class="buildingItem" onclick="send('test')">
+            <p>Model Farmhouse</p>
+        </div>
+                <script>
+            var socket = new WebSocket("ws://localhost:8080/PowerWallSound/server");
+            socket.onmessage = onMessage;
+
+            function onMessage(event) {
+                alert(event);
+            }
+            function send(text){
+                socket.send("newSession,page1");
+            }
+        </script>
     </body>
+    
 </html>
