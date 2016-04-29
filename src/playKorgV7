@@ -1,0 +1,257 @@
+import themidibus.*;
+import javax.sound.midi.*;
+
+MidiBus myBus;
+Synthesizer synthesizer = null;
+
+boolean StartSynth() {
+  try
+  {
+    synthesizer = MidiSystem.getSynthesizer();
+    synthesizer.open();
+  }
+  catch (MidiUnavailableException e)
+  {
+    println("Cannot play!");
+    return false;
+  }
+  return true;
+}
+
+void StopSynth() {
+  if (synthesizer != null)
+  {
+    synthesizer.close();
+    synthesizer = null;
+  }
+}
+
+void Wait(int duration) {
+  try { 
+    Thread.sleep(duration);
+  } 
+  catch (InterruptedException e) {
+  }
+}
+
+void PlayNote(int noteNumber, int velocity, int duration) {
+  MidiChannel[] channels = synthesizer.getChannels();
+  channels[0].noteOn(noteNumber, velocity);
+  Wait(duration);
+  channels[0].noteOff(noteNumber);
+}
+
+void PlayNote(int noteNumber, int velocity, int durationOn, int durationOff) {
+  MidiChannel[] channels = synthesizer.getChannels();
+  channels[0].noteOn(noteNumber, velocity);
+  Wait(durationOn);
+  channels[0].noteOff(noteNumber, durationOff);
+}
+
+void stop() {
+  println("Stop");
+  StopSynth();
+  super.stop();
+}
+
+// create the 16 box ojects
+Box box5;
+Box box6;
+Box box7;
+Box box8;
+
+Box box9;
+Box box10;
+Box box11;
+Box box12;
+
+Box box13;
+Box box14;
+Box box15;
+Box box16;
+
+
+void setup() {
+  //fullScreen(P2D, SPAN);  // multiple monitors full screen
+  fullScreen();         // one monitor full screen
+  frameRate(60);
+
+  // create and display all 16 boxes
+  box5 = new Box(5);
+  box5.displayBox();
+  box6 = new Box(6);
+  box6.displayBox();
+  box7 = new Box(7);
+  box7.displayBox();
+  box8 = new Box(8);
+  box8.displayBox();
+
+  box9 = new Box(9);
+  box9.displayBox();
+  box10 = new Box(10);
+  box10.displayBox();
+  box11 = new Box(11);
+  box11.displayBox();
+  box12 = new Box(12);
+  box12.displayBox();
+
+  box13 = new Box(13);
+  box13.displayBox();
+  box14 = new Box(14);
+  box14.displayBox();
+  box15 = new Box(15);
+  box15.displayBox();
+  box16 = new Box(16);
+  box16.displayBox();
+
+
+  MidiBus.list(); // List all available Midi devices on STDOUT. This will show each device's index and name.
+
+  //                   Parent In Out
+  //                     |    |  |
+  myBus = new MidiBus(this, 1, 4); // Create a new MidiBus using the device index to select the Midi input and output devices respectively.
+
+  if (!StartSynth())
+  {
+    exit();
+  }
+}
+
+void draw() {
+  // initial values doesn't really make any difference 
+  int channel = 0;
+  int tone = 64;
+  int velocity = 127;
+
+  myBus.sendNoteOn(channel, tone, velocity); // Send a Midi noteOn
+  delay(200);
+  myBus.sendNoteOff(channel, tone, velocity); // Send a Midi nodeOff
+
+  int number = 0;
+  int value = 90;
+
+  myBus.sendControllerChange(channel, number, value); // Send a controllerChange
+  delay(0);
+}
+
+
+// CHANGE BOX COLOUR
+void changeColour () {
+  
+  // TODO: Get tone, find object and posistion, add green box on the top, wait few seconds, add original box
+  
+  fill(0, 255, 0);
+  rect(width/4, height/3, width/4, height/3); // 2x2
+  println("BKG added");
+
+  Wait(300);
+
+  fill(204, 102, 130);
+  rect(width/4, height/3, width/4, height/3); // 2x2
+  println("BKG removed");
+}
+
+void noteOn(int channel, int tone, int velocity) {
+  // When button is pressed
+  println("Note On: Channel:" + channel + ". Tone:" + tone + ". Velocity:"+velocity);
+
+  PlayNote(tone, velocity, 300);
+  changeColour();
+}
+
+void noteOff(int channel, int tone, int velocity) {
+  // When button is released
+  println("Note Off: Channel: " + channel + ". Tone:" +tone + ". Velocity:"+velocity);
+}
+
+void controllerChange(int channel, int number, int value) {
+  // Receive a controllerChange
+  println("Controller Change: Channel:" + channel + ". Number:" + number + ". Value:"+value);
+}
+
+void delay(int time) {
+  int current = millis();
+  while (millis () < current+time) Thread.yield();
+}
+
+class Box { 
+  int boxNumber;
+  float[] position;
+  color fill;
+  int tone;
+
+  Box(int boxNumber) { 
+    switch(boxNumber) {
+    case 5: 
+      position = new float[] {0, 0, width/4, height/3};
+      fill = color(204, 102, 0);
+      tone = 48;
+      break;
+    case 6: 
+      position = new float[] {width/4, 0, width/4, height/3};
+      fill = color(204, 132, 0);
+      tone = 47;
+      break;
+    case 7: 
+      position = new float[] {width/4*2, 0, width/4, height/3};
+      fill = color(204, 162, 0);
+      tone = 45;
+      break;
+    case 8: 
+      position = new float[] {width/4*3, 0, width/4, height/3};
+      fill = color(204, 102, 100);
+      tone = 43;
+      break;
+    case 9: 
+      position = new float[] {0, height/3, width/4, height/3};
+      fill = color(204, 102, 100);
+      tone = 37;
+      break;
+    case 10: 
+      position = new float[] {width/4, height/3, width/4, height/3};
+      fill = color(204, 102, 130);
+      tone = 39;
+      break;
+    case 11: 
+      position = new float[] {width/4*2, height/3, width/4, height/3};
+      fill = color(204, 102, 160);
+      tone = 56;
+      break;
+    case 12: 
+      position = new float[] {width/4*3, height/3, width/4, height/3};
+      fill = color(204, 102, 190);
+      tone = 44;
+      break;
+    case 13: 
+      position = new float[] {0, height/3*2, width/4, height/3};
+      fill = color(104, 102, 0);
+      tone = 36;
+      break;
+    case 14: 
+      position = new float[] {width/4, height/3*2, width/4, height/3};
+      fill = color(134, 102, 0);
+      tone = 40;
+      break;
+    case 15: 
+      position = new float[] {width/4, height/3*2, width/4, height/3};
+      fill = color(164, 102, 0);
+      tone = 42;
+      break;
+    case 16: 
+      position = new float[] {width/4*3, height/3*2, width/4, height/3};
+      fill = color(194, 102, 0);
+      tone = 46;
+      break;
+
+    default:
+      println("Box not created");   // Does not execute
+      break;
+    }
+  }
+
+  void displayBox() {
+    stroke(0);
+    fill(fill);
+    rect(position[0], position[1], position[2], position[3]);
+  }
+}
