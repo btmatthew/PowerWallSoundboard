@@ -1,0 +1,134 @@
+import themidibus.*;
+import javax.sound.midi.*;
+
+MidiBus myBus;
+Synthesizer synthesizer = null;
+int currentColor = 0;
+
+void midiMessage(MidiMessage message, long timestamp, String bus_name) { 
+  int note = (int)(message.getMessage()[1] & 0xFF) ;
+  int vel = (int)(message.getMessage()[2] & 0xFF);
+
+  println("Bus " + bus_name + ": Note "+ note + ", vel " + vel);
+  if (vel > 0 ) {
+   currentColor = (int)brightness(note*10);
+   println("Current colour:" + currentColor);
+  }
+}
+
+boolean StartSynth() {
+  try
+  {
+    synthesizer = MidiSystem.getSynthesizer();
+    synthesizer.open();
+  }
+  catch (MidiUnavailableException e)
+  {
+    println("Cannot play!");
+    return false;
+  }
+  return true;
+}
+
+void StopSynth() {
+  if (synthesizer != null)
+  {
+    synthesizer.close();
+    synthesizer = null;
+  }
+}
+
+void Wait(int duration) {
+  try { 
+    Thread.sleep(duration);
+  } 
+  catch (InterruptedException e) {
+  }
+}
+
+void PlayNote(int noteNumber, int velocity, int duration) {
+  MidiChannel[] channels = synthesizer.getChannels();
+  channels[0].noteOn(noteNumber, velocity);
+  Wait(duration);
+  channels[0].noteOff(noteNumber);
+}
+
+void PlayNote(int noteNumber, int velocity, int durationOn, int durationOff) {
+  MidiChannel[] channels = synthesizer.getChannels();
+  channels[0].noteOn(noteNumber, velocity);
+  Wait(durationOn);
+  channels[0].noteOff(noteNumber, durationOff);
+}
+
+void stop() {
+  println("Stop");
+  StopSynth();
+  super.stop();
+}
+
+void setup() {
+  size(200, 200);
+  frameRate(120);
+  background(0,255,121);
+
+  MidiBus.list(); // List all available Midi devices on STDOUT. This will show each device's index and name.
+
+  // Either you can
+  //                   Parent In Out
+  //                     |    |  |
+  myBus = new MidiBus(this, 1, 4); // Create a new MidiBus using the device index to select the Midi input and output devices respectively.
+
+  if (!StartSynth())
+  {
+    exit();
+  }
+}
+
+float yPos = 0.0;
+
+void draw() {
+  background(currentColor);
+  
+  yPos = yPos - 1.0;
+  if (yPos < 0) {
+    yPos = height;
+  }
+  line(0, yPos, width, yPos);
+  
+  // initial values doesn't really make any difference 
+  int channel = 0;
+  int pitch = 64;
+  int velocity = 127;
+
+  myBus.sendNoteOn(channel, pitch, velocity); // Send a Midi noteOn
+  delay(200);
+  myBus.sendNoteOff(channel, pitch, velocity); // Send a Midi nodeOff
+
+  int number = 0;
+  int value = 90;
+
+  myBus.sendControllerChange(channel, number, value); // Send a controllerChange
+  delay(0);
+}
+
+void noteOn(int channel, int pitch, int velocity) {
+  // When button is pressed
+  println("Note On: Channel:" + channel + ". Pitch:" + pitch + ". Velocity:"+velocity);
+
+  PlayNote(pitch, velocity, 300);
+}
+
+void noteOff(int channel, int pitch, int velocity) {
+  // When button is released
+  println("Note Off: Channel: " + channel + ". Pitch:" +pitch + ". Velocity:"+velocity);
+}
+
+void controllerChange(int channel, int number, int value) {
+  // Receive a controllerChange
+  println("Controller Change: Channel:" + channel + ". Number:" + number + ". Value:"+value);
+}
+
+void delay(int time) {
+  int current = millis();
+  while (millis () < current+time) Thread.yield();
+}
