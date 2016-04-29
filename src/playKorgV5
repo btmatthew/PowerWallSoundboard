@@ -1,0 +1,158 @@
+import themidibus.*;
+import javax.sound.midi.*;
+
+MidiBus myBus;
+Synthesizer synthesizer = null;
+
+boolean StartSynth() {
+  try
+  {
+    synthesizer = MidiSystem.getSynthesizer();
+    synthesizer.open();
+  }
+  catch (MidiUnavailableException e)
+  {
+    println("Cannot play!");
+    return false;
+  }
+  return true;
+}
+
+void StopSynth() {
+  if (synthesizer != null)
+  {
+    synthesizer.close();
+    synthesizer = null;
+  }
+}
+
+void Wait(int duration) {
+  try { 
+    Thread.sleep(duration);
+  } 
+  catch (InterruptedException e) {
+  }
+}
+
+void PlayNote(int noteNumber, int velocity, int duration) {
+  MidiChannel[] channels = synthesizer.getChannels();
+  channels[0].noteOn(noteNumber, velocity);
+  Wait(duration);
+  channels[0].noteOff(noteNumber);
+}
+
+void PlayNote(int noteNumber, int velocity, int durationOn, int durationOff) {
+  MidiChannel[] channels = synthesizer.getChannels();
+  channels[0].noteOn(noteNumber, velocity);
+  Wait(durationOn);
+  channels[0].noteOff(noteNumber, durationOff);
+}
+
+void stop() {
+  println("Stop");
+  StopSynth();
+  super.stop();
+}
+
+void setup() {
+  //fullScreen(P2D, SPAN);  // multiple monitors full screen
+  fullScreen();         // one monitor full screen
+  frameRate(60);
+
+  fill(204, 102, 0);
+  rect(0, 0, width/4, height/3); // 1x1
+  fill(204, 132, 0);
+  rect(width/4, 0, width/4, height/3); // 1x2
+  fill(204, 162, 0);
+  rect(width/4*2, 0, width/4, height/3); // 1x3
+  fill(204, 192, 0);
+  rect(width/4*3, 0, width/4, height/3); // 1x4
+
+  fill(204, 102, 100);
+  rect(0, height/3, width/4, height/3); // 2x1
+  fill(204, 102, 130);
+  rect(width/4, height/3, width/4, height/3); // 2x2
+  fill(204, 102, 160);
+  rect(width/4*2, height/3, width/4, height/3); // 2x3
+  fill(204, 102, 190);
+  rect(width/4*3, height/3, width/4, height/3); // 2x4
+
+  fill(104, 102, 0); 
+  rect(0, height/3*2, width/4, height/3); // 3x1
+  fill(134, 102, 0);
+  rect(width/4, height/3*2, width/4, height/3); // 3x2
+  fill(164, 102, 0);
+  rect(width/4*2, height/3*2, width/4, height/3); // 3x3
+  fill(194, 102, 0);
+  rect(width/4*3, height/3*2, width/4, height/3); // 3x4
+
+  MidiBus.list(); // List all available Midi devices on STDOUT. This will show each device's index and name.
+
+  //                   Parent In Out
+  //                     |    |  |
+  myBus = new MidiBus(this, 1, 4); // Create a new MidiBus using the device index to select the Midi input and output devices respectively.
+
+  if (!StartSynth())
+  {
+    exit();
+  }
+}
+
+// just to check the framerate speed basically
+// float yPos = 0.0;
+
+void draw() {
+  // initial values doesn't really make any difference 
+  int channel = 0;
+  int pitch = 64;
+  int velocity = 127;
+
+  myBus.sendNoteOn(channel, pitch, velocity); // Send a Midi noteOn
+  delay(200);
+  myBus.sendNoteOff(channel, pitch, velocity); // Send a Midi nodeOff
+
+  int number = 0;
+  int value = 90;
+
+  myBus.sendControllerChange(channel, number, value); // Send a controllerChange
+  delay(0);
+}
+
+void changeColour () {
+  fill(0,255,0);
+  rect(width/4, height/3, width/4, height/3); // 2x2
+  println("BKG added");
+
+  Wait(300);
+
+  clearFeedback();
+} 
+
+void clearFeedback() {
+  fill(204, 102, 130);
+  rect(width/4, height/3, width/4, height/3); // 2x2
+  println("BKG removed");
+}
+
+void noteOn(int channel, int pitch, int velocity) {
+  // When button is pressed
+  println("Note On: Channel:" + channel + ". Pitch:" + pitch + ". Velocity:"+velocity);
+
+  PlayNote(pitch, velocity, 300);
+  changeColour();
+}
+
+void noteOff(int channel, int pitch, int velocity) {
+  // When button is released
+  println("Note Off: Channel: " + channel + ". Pitch:" +pitch + ". Velocity:"+velocity);
+}
+
+void controllerChange(int channel, int number, int value) {
+  // Receive a controllerChange
+  println("Controller Change: Channel:" + channel + ". Number:" + number + ". Value:"+value);
+}
+
+void delay(int time) {
+  int current = millis();
+  while (millis () < current+time) Thread.yield();
+}
